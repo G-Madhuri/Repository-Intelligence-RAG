@@ -1,0 +1,51 @@
+{
+  "project_name": "DocuBot AI",
+  "project_type": "Web App",
+  "languages": [
+    "Python",
+    "Markdown"
+  ],
+  "frameworks": [
+    "Streamlit"
+  ],
+  "databases": [],
+  "authentication_methods": [],
+  "major_modules": [
+    "app.py",
+    "transformers",
+    "textstat",
+    "wordcloud",
+    "PyPDF2",
+    "python-docx",
+    "requests",
+    "google-generativeai",
+    "nltk",
+    "python-dotenv"
+  ],
+  "api_endpoints": [
+    "https://api.dictionaryapi.dev/api/v2/entries/en/{term}",
+    "models/gemini-1.5-pro (Google Gemini API)"
+  ],
+  "important_files": [
+    "app.py",
+    "requirements.txt",
+    ".env",
+    "README.md"
+  ],
+  "architecture_pattern": "Monolith",
+  "dependencies": [
+    "streamlit",
+    "pandas",
+    "textstat",
+    "wordcloud",
+    "matplotlib",
+    "transformers",
+    "python-docx",
+    "PyPDF2",
+    "requests",
+    "google-generativeai",
+    "nltk",
+    "python-dotenv",
+    "torch"
+  ]
+}

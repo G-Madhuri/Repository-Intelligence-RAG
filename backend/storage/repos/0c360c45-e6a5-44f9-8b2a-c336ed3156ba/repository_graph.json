@@ -1,0 +1,458 @@
+{
+  "nodes": [
+    {
+      "id": "app.py",
+      "label": "Main Application",
+      "type": "entrypoint",
+      "properties": {}
+    },
+    {
+      "id": "streamlit",
+      "label": "Streamlit Framework",
+      "type": "framework",
+      "properties": {}
+    },
+    {
+      "id": "transformers",
+      "label": "HuggingFace Transformers",
+      "type": "library",
+      "properties": {}
+    },
+    {
+      "id": "distilbart-cnn-12-6",
+      "label": "DistilBART Summarization Model",
+      "type": "model",
+      "properties": {}
+    },
+    {
+      "id": "textstat",
+      "label": "Textstat Library",
+      "type": "library",
+      "properties": {}
+    },
+    {
+      "id": "wordcloud",
+      "label": "WordCloud Library",
+      "type": "library",
+      "properties": {}
+    },
+    {
+      "id": "matplotlib",
+      "label": "Matplotlib Library",
+      "type": "library",
+      "properties": {}
+    },
+    {
+      "id": "PyPDF2",
+      "label": "PyPDF2 Library",
+      "type": "library",
+      "properties": {}
+    },
+    {
+      "id": "python-docx",
+      "label": "Python-Docx Library",
+      "type": "library",
+      "properties": {}
+    },
+    {
+      "id": "requests",
+      "label": "Requests Library",
+      "type": "library",
+      "properties": {}
+    },
+    {
+      "id": "google-generativeai",
+      "label": "Google Generative AI Library",
+      "type": "library",
+      "properties": {}
+    },
+    {
+      "id": "gemini-1.5-pro",
+      "label": "Gemini 1.5 Pro Model",
+      "type": "model",
+      "properties": {}
+    },
+    {
+      "id": "nltk",
+      "label": "NLTK Library",
+      "type": "library",
+      "properties": {}
+    },
+    {
+      "id": "python-dotenv",
+      "label": "Python-Dotenv Library",
+      "type": "library",
+      "properties": {}
+    },
+    {
+      "id": "dictionaryapi.dev",
+      "label": "Free Dictionary API",
+      "type": "api",
+      "properties": {}
+    },
+    {
+      "id": "uploaded_file",
+      "label": "Uploaded Document",
+      "type": "data",
+      "properties": {}
+    },
+    {
+      "id": "summary_output",
+      "label": "Generated Summary",
+      "type": "data",
+      "properties": {}
+    },
+    {
+      "id": "text_analysis_output",
+      "label": "Text Analysis Results",
+      "type": "data",
+      "properties": {}
+    },
+    {
+      "id": "word_cloud_image",
+      "label": "Word Cloud Image",
+      "type": "data",
+      "properties": {}
+    },
+    {
+      "id": "legal_term_input",
+      "label": "Legal Term Input",
+      "type": "data",
+      "properties": {}
+    },
+    {
+      "id": "chatbot_input",
+      "label": "Chatbot Query",
+      "type": "data",
+      "properties": {}
+    },
+    {
+      "id": "file_chatbot_input",
+      "label": "File-Context Chatbot Query",
+      "type": "data",
+      "properties": {}
+    },
+    {
+      "id": "requirements.txt",
+      "label": "Dependencies List",
+      "type": "file",
+      "properties": {}
+    },
+    {
+      "id": ".env",
+      "label": "Environment Variables",
+      "type": "file",
+      "properties": {}
+    },
+    {
+      "id": "README.md",
+      "label": "Project Documentation",
+      "type": "file",
+      "properties": {}
+    }
+  ],
+  "edges": [
+    {
+      "source": "app.py",
+      "target": "streamlit",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "pandas",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "textstat",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "wordcloud",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "matplotlib",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "transformers",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "python-docx",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "PyPDF2",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "requests",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "google-generativeai",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "nltk",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "python-dotenv",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "distilbart-cnn-12-6",
+      "type": "calls",
+      "label": "summarizes with"
+    },
+    {
+      "source": "app.py",
+      "target": "dictionaryapi.dev",
+      "type": "calls",
+      "label": "fetches definitions from"
+    },
+    {
+      "source": "app.py",
+      "target": "gemini-1.5-pro",
+      "type": "calls",
+      "label": "generates responses with"
+    },
+    {
+      "source": "uploaded_file",
+      "target": "app.py",
+      "type": "data_flow",
+      "label": "provides content to"
+    },
+    {
+      "source": "app.py",
+      "target": "summary_output",
+      "type": "data_flow",
+      "label": "generates"
+    },
+    {
+      "source": "app.py",
+      "target": "text_analysis_output",
+      "type": "data_flow",
+      "label": "produces"
+    },
+    {
+      "source": "app.py",
+      "target": "word_cloud_image",
+      "type": "data_flow",
+      "label": "creates"
+    },
+    {
+      "source": "legal_term_input",
+      "target": "app.py",
+      "type": "data_flow",
+      "label": "queries"
+    },
+    {
+      "source": "chatbot_input",
+      "target": "app.py",
+      "type": "data_flow",
+      "label": "sends to"
+    },
+    {
+      "source": "file_chatbot_input",
+      "target": "app.py",
+      "type": "data_flow",
+      "label": "sends to"
+    },
+    {
+      "source": "requirements.txt",
+      "target": "app.py",
+      "type": "ownership",
+      "label": "defines dependencies for"
+    },
+    {
+      "source": ".env",
+      "target": "app.py",
+      "type": "data_flow",
+      "label": "provides API key to"
+    },
+    {
+      "source": "README.md",
+      "target": "app.py",
+      "type": "documentation",
+      "label": "describes"
+    }
+  ],
+  "entry_points": [
+    {
+      "file_path": "app.py",
+      "type": "streamlit_app",
+      "description": "Main entry point for the Streamlit web application, executed via `streamlit run app.py`."
+    }
+  ],
+  "business_flows": [
+    {
+      "flow_name": "Document Upload & Analysis",
+      "description": "User uploads a document, which is then parsed, analyzed for statistics, common words, readability, and a word cloud is generated.",
+      "steps": [
+        "uploaded_file",
+        "app.py",
+        "PyPDF2",
+        "python-docx",
+        "textstat",
+        "nltk",
+        "wordcloud",
+        "text_analysis_output",
+        "word_cloud_image"
+      ]
+    },
+    {
+      "flow_name": "Document Summarization",
+      "description": "User uploads a document and requests a summary, which is generated using a HuggingFace transformer model.",
+      "steps": [
+        "uploaded_file",
+        "app.py",
+        "transformers",
+        "distilbart-cnn-12-6",
+        "summary_output"
+      ]
+    },
+    {
+      "flow_name": "Legal Term Explanation",
+      "description": "User inputs a legal term, and the application fetches its definition from an external dictionary API.",
+      "steps": [
+        "legal_term_input",
+        "app.py",
+        "requests",
+        "dictionaryapi.dev"
+      ]
+    },
+    {
+      "flow_name": "General Chatbot Interaction",
+      "description": "User interacts with a general-purpose AI chatbot powered by Google Gemini.",
+      "steps": [
+        "chatbot_input",
+        "app.py",
+        "google-generativeai",
+        "gemini-1.5-pro"
+      ]
+    },
+    {
+      "flow_name": "File-Contextual Chatbot Interaction",
+      "description": "User asks questions about the content of an uploaded file, with the Gemini chatbot providing answers based on the document's context.",
+      "steps": [
+        "uploaded_file",
+        "file_chatbot_input",
+        "app.py",
+        "google-generativeai",
+        "gemini-1.5-pro"
+      ]
+    }
+  ],
+  "critical_paths": [
+    {
+      "path_name": "Text Summarization Performance",
+      "description": "Processing and summarizing large documents using the DistilBART model can be computationally intensive and time-consuming, especially with chunking logic.",
+      "nodes": [
+        "uploaded_file",
+        "app.py",
+        "transformers",
+        "distilbart-cnn-12-6",
+        "summary_output"
+      ]
+    },
+    {
+      "path_name": "External API Latency/Reliability",
+      "description": "Calls to the Free Dictionary API and Google Gemini API introduce external dependencies and potential latency or failure points.",
+      "nodes": [
+        "app.py",
+        "requests",
+        "dictionaryapi.dev",
+        "google-generativeai",
+        "gemini-1.5-pro"
+      ]
+    },
+    {
+      "path_name": "Large File Text Extraction",
+      "description": "Extracting text from very large PDF or DOCX files can consume significant memory and processing time, impacting user experience.",
+      "nodes": [
+        "uploaded_file",
+        "app.py",
+        "PyPDF2",
+        "python-docx"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "name": "Document Parsing & Extraction",
+      "description": "Handling different document types (.txt, .pdf, .docx) and extracting their raw text content for further processing.",
+      "files": [
+        "app.py"
+      ]
+    },
+    {
+      "name": "Natural Language Processing (NLP)",
+      "description": "Core text analysis functionalities including tokenization, stopword removal, word frequency, and readability scoring.",
+      "files": [
+        "app.py"
+      ]
+    },
+    {
+      "name": "Abstractive Summarization",
+      "description": "Using a pre-trained transformer model (DistilBART) to generate concise summaries of potentially long documents, involving text chunking.",
+      "files": [
+        "app.py"
+      ]
+    },
+    {
+      "name": "AI Chatbot Integration",
+      "description": "Integrating Google Gemini Pro for both general conversational AI and contextual questioning based on uploaded document content.",
+      "files": [
+        "app.py"
+      ]
+    },
+    {
+      "name": "External API Interaction",
+      "description": "Making HTTP requests to third-party services like the Free Dictionary API for specific data lookups.",
+      "files": [
+        "app.py"
+      ]
+    },
+    {
+      "name": "Streamlit User Interface",
+      "description": "Building an interactive web application frontend with file upload, button actions, text display, and sidebar components.",
+      "files": [
+        "app.py"
+      ]
+    },
+    {
+      "name": "Environment Configuration",
+      "description": "Managing sensitive information like API keys using environment variables loaded from a `.env` file.",
+      "files": [
+        "app.py",
+        ".env"
+      ]
+    }
+  ]
+}

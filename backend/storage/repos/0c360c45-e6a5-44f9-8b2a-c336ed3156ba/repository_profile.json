@@ -1,0 +1,50 @@
+{
+  "project_name": "DocuBot AI",
+  "project_type": "Web Application",
+  "languages": [
+    "Python",
+    "Markdown"
+  ],
+  "frameworks": [
+    "Streamlit"
+  ],
+  "databases": [],
+  "authentication_methods": [
+    "API Key (Google Generative AI)"
+  ],
+  "major_modules": [
+    "app.py",
+    "nltk",
+    "transformers",
+    "textstat",
+    "wordcloud",
+    "PyPDF2",
+    "python-docx",
+    "google-generativeai",
+    "requests",
+    "python-dotenv"
+  ],
+  "api_endpoints": [],
+  "important_files": [
+    ".env",
+    "app.py",
+    "requirements.txt",
+    "README.md"
+  ],
+  "architecture_pattern": "Monolithic Streamlit Application",
+  "dependencies": [
+    "streamlit",
+    "pandas",
+    "textstat",
+    "wordcloud",
+    "matplotlib",
+    "transformers",
+    "python-docx",
+    "PyPDF2",
+    "requests",
+    "google-generativeai",
+    "nltk",
+    "python-dotenv",
+    "torch"
+  ]
+}

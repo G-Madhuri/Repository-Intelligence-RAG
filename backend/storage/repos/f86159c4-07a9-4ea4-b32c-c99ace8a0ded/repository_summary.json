@@ -1,0 +1,39 @@
+{
+  "elevator_pitch": "DocuBot AI is a Streamlit-based intelligent document assistant that allows users to upload .txt, .docx, or .pdf files for summarization, comprehensive text analysis, legal term explanations, and interactive chatbot queries powered by Google Gemini.",
+  "core_features": [
+    "Document Upload and Parsing (.txt, .docx, .pdf)",
+    "Text Summarization (using HuggingFace DistilBART)",
+    "Legal Term Explanation (via Free Dictionary API with Google fallback)",
+    "Gemini-powered Chatbot (general and file-context aware)",
+    "Comprehensive Text Analytics (word, sentence, paragraph, character counts)",
+    "Most Common Words identification (stopwords removed)",
+    "Word Cloud Visualization",
+    "Flesch-Kincaid Readability Scoring",
+    "Downloadable Summary and Text Statistics"
+  ],
+  "main_workflows": [
+    "**Document Processing**: User uploads a document -> System extracts text -> Performs various analyses (counts, readability, common words, word cloud) -> User can trigger summarization -> User can download results.",
+    "**Legal Term Lookup**: User inputs a term in the sidebar -> System queries dictionary API -> Displays definition or Google search link.",
+    "**Chatbot Interaction**: User activates chatbot -> Asks general questions or questions specific to the uploaded document -> System queries Gemini API -> Displays AI response."
+  ],
+  "key_components": [
+    "Streamlit UI for interactive web interface",
+    "Document Parsers (PyPDF2, python-docx) for text extraction",
+    "NLP Pipeline (transformers, textstat, nltk) for analysis and summarization",
+    "External API Clients (requests, google-generativeai) for dictionary and generative AI",
+    "Environment Management (python-dotenv) for API key handling"
+  ],
+  "key_risks": [
+    "Monolithic architecture may hinder scalability and maintainability for future growth.",
+    "High reliance on external APIs (Free Dictionary, Google Gemini) for core functionalities.",
+    "Potential performance issues with large document processing and summarization.",
+    "Runtime NLTK data download can cause initial delays or deployment challenges.",
+    "Security considerations for API key management in production environments."
+  ],
+  "developer_start_points": [
+    "app.py (main application logic and UI)",
+    "README.md (project overview and setup instructions)",
+    "requirements.txt (project dependencies)",
+    ".env (API key configuration)"
+  ]
+}
