@@ -1,0 +1,518 @@
+{
+  "nodes": [
+    {
+      "id": "app.py",
+      "label": "app.py",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "requirements.txt",
+      "label": "requirements.txt",
+      "type": "file",
+      "properties": {}
+    },
+    {
+      "id": ".env",
+      "label": ".env",
+      "type": "file",
+      "properties": {}
+    },
+    {
+      "id": "README.md",
+      "label": "README.md",
+      "type": "file",
+      "properties": {}
+    },
+    {
+      "id": "streamlit",
+      "label": "Streamlit",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "pandas",
+      "label": "Pandas",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "textstat",
+      "label": "Textstat",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "wordcloud",
+      "label": "WordCloud",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "matplotlib.pyplot",
+      "label": "Matplotlib.pyplot",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "transformers",
+      "label": "HuggingFace Transformers",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "docx",
+      "label": "Python-Docx",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "PyPDF2",
+      "label": "PyPDF2",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "requests",
+      "label": "Requests",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "google.generativeai",
+      "label": "Google Generative AI",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "os",
+      "label": "OS",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "string",
+      "label": "String",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "nltk",
+      "label": "NLTK",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "dotenv",
+      "label": "Python-Dotenv",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "Free Dictionary API",
+      "label": "Free Dictionary API",
+      "type": "api",
+      "properties": {}
+    },
+    {
+      "id": "Google Gemini API",
+      "label": "Google Gemini API",
+      "type": "api",
+      "properties": {}
+    },
+    {
+      "id": "Document Upload",
+      "label": "Document Upload",
+      "type": "entrypoint",
+      "properties": {}
+    },
+    {
+      "id": "Legal Term Input",
+      "label": "Legal Term Input",
+      "type": "entrypoint",
+      "properties": {}
+    },
+    {
+      "id": "Chatbot Input",
+      "label": "Chatbot Input",
+      "type": "entrypoint",
+      "properties": {}
+    },
+    {
+      "id": "File Context Chatbot Input",
+      "label": "File Context Chatbot Input",
+      "type": "entrypoint",
+      "properties": {}
+    },
+    {
+      "id": "Text Extraction Logic",
+      "label": "Text Extraction Logic",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "Text Analysis Logic",
+      "label": "Text Analysis Logic",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "Summarization Logic",
+      "label": "Summarization Logic",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "Word Cloud Generation Logic",
+      "label": "Word Cloud Generation Logic",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "Readability Scoring Logic",
+      "label": "Readability Scoring Logic",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "Common Words Calculation Logic",
+      "label": "Common Words Calculation Logic",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "Chatbot Interaction Logic",
+      "label": "Chatbot Interaction Logic",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "Legal Term Lookup Logic",
+      "label": "Legal Term Lookup Logic",
+      "type": "module",
+      "properties": {}
+    },
+    {
+      "id": "NLTK Stopwords Data",
+      "label": "NLTK Stopwords Data",
+      "type": "file",
+      "properties": {}
+    }
+  ],
+  "edges": [
+    {
+      "source": "app.py",
+      "target": "streamlit",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "pandas",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "textstat",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "wordcloud",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "matplotlib.pyplot",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "transformers",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "docx",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "PyPDF2",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "requests",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "google.generativeai",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "os",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "string",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "nltk",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": "dotenv",
+      "type": "imports",
+      "label": "uses"
+    },
+    {
+      "source": "app.py",
+      "target": ".env",
+      "type": "data_flow",
+      "label": "reads API_KEY from"
+    },
+    {
+      "source": "app.py",
+      "target": "Free Dictionary API",
+      "type": "calls",
+      "label": "fetches definition from"
+    },
+    {
+      "source": "app.py",
+      "target": "Google Gemini API",
+      "type": "calls",
+      "label": "generates content with"
+    },
+    {
+      "source": "Document Upload",
+      "target": "app.py",
+      "type": "data_flow",
+      "label": "provides file to"
+    },
+    {
+      "source": "app.py",
+      "target": "Text Extraction Logic",
+      "type": "calls",
+      "label": "uses"
+    },
+    {
+      "source": "Text Extraction Logic",
+      "target": "Text Analysis Logic",
+      "type": "data_flow",
+      "label": "provides text to"
+    },
+    {
+      "source": "Text Extraction Logic",
+      "target": "Summarization Logic",
+      "type": "data_flow",
+      "label": "provides text to"
+    },
+    {
+      "source": "Text Extraction Logic",
+      "target": "Word Cloud Generation Logic",
+      "type": "data_flow",
+      "label": "provides text to"
+    },
+    {
+      "source": "Text Extraction Logic",
+      "target": "Common Words Calculation Logic",
+      "type": "data_flow",
+      "label": "provides text to"
+    },
+    {
+      "source": "Text Extraction Logic",
+      "target": "Readability Scoring Logic",
+      "type": "data_flow",
+      "label": "provides text to"
+    },
+    {
+      "source": "Text Extraction Logic",
+      "target": "File Context Chatbot Input",
+      "type": "data_flow",
+      "label": "provides context to"
+    },
+    {
+      "source": "app.py",
+      "target": "NLTK Stopwords Data",
+      "type": "data_flow",
+      "label": "uses"
+    },
+    {
+      "source": "Legal Term Input",
+      "target": "Legal Term Lookup Logic",
+      "type": "data_flow",
+      "label": "provides term to"
+    },
+    {
+      "source": "Legal Term Lookup Logic",
+      "target": "app.py",
+      "type": "calls",
+      "label": "called by"
+    },
+    {
+      "source": "Chatbot Input",
+      "target": "Chatbot Interaction Logic",
+      "type": "data_flow",
+      "label": "provides query to"
+    },
+    {
+      "source": "File Context Chatbot Input",
+      "target": "Chatbot Interaction Logic",
+      "type": "data_flow",
+      "label": "provides query with context to"
+    },
+    {
+      "source": "Chatbot Interaction Logic",
+      "target": "app.py",
+      "type": "calls",
+      "label": "called by"
+    },
+    {
+      "source": "requirements.txt",
+      "target": "app.py",
+      "type": "ownership",
+      "label": "defines dependencies for"
+    }
+  ],
+  "entry_points": [
+    {
+      "file_path": "app.py",
+      "type": "streamlit_app",
+      "description": "Main entry point for the Streamlit web application, executed via `streamlit run app.py`."
+    }
+  ],
+  "business_flows": [
+    {
+      "flow_name": "Document Analysis & Summarization",
+      "description": "User uploads a document, which is then parsed, analyzed for various metrics, visualized with a word cloud, and can be summarized using an NLP model.",
+      "steps": [
+        "Document Upload",
+        "app.py",
+        "Text Extraction Logic",
+        "Text Analysis Logic",
+        "Common Words Calculation Logic",
+        "Readability Scoring Logic",
+        "Word Cloud Generation Logic",
+        "Summarization Logic"
+      ]
+    },
+    {
+      "flow_name": "Legal Term Definition Lookup",
+      "description": "Users can input a legal term in the sidebar to get its definition from an external dictionary API, with a Google search fallback.",
+      "steps": [
+        "Legal Term Input",
+        "app.py",
+        "Legal Term Lookup Logic",
+        "Free Dictionary API"
+      ]
+    },
+    {
+      "flow_name": "AI Chatbot Interaction",
+      "description": "Users can interact with a Gemini-powered chatbot for general queries or questions specifically related to the content of an uploaded document.",
+      "steps": [
+        "Chatbot Input",
+        "File Context Chatbot Input",
+        "app.py",
+        "Chatbot Interaction Logic",
+        "Google Gemini API"
+      ]
+    }
+  ],
+  "critical_paths": [
+    {
+      "path_name": "Document Summarization",
+      "description": "This path involves chunking potentially large documents and performing multiple inferences with the DistilBART model, which can be computationally intensive and time-consuming.",
+      "nodes": [
+        "Document Upload",
+        "app.py",
+        "Text Extraction Logic",
+        "Summarization Logic",
+        "transformers"
+      ]
+    },
+    {
+      "path_name": "Large Document Parsing",
+      "description": "Extracting text from very large or complex PDF/DOCX files can consume significant memory and CPU, potentially leading to performance bottlenecks.",
+      "nodes": [
+        "Document Upload",
+        "app.py",
+        "Text Extraction Logic",
+        "PyPDF2",
+        "docx"
+      ]
+    },
+    {
+      "path_name": "External API Calls",
+      "description": "Reliance on external services like Free Dictionary API and Google Gemini API means that the responsiveness of these features is subject to the latency and availability of those APIs.",
+      "nodes": [
+        "app.py",
+        "Free Dictionary API",
+        "Google Gemini API"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "name": "Document Parsing",
+      "description": "Handles the extraction of raw text content from various document formats (.txt, .docx, .pdf) for further processing.",
+      "files": [
+        "app.py"
+      ]
+    },
+    {
+      "name": "Natural Language Processing (NLP)",
+      "description": "Encompasses text analysis (word/sentence counts, common words), readability scoring, and text summarization using specialized libraries.",
+      "files": [
+        "app.py"
+      ]
+    },
+    {
+      "name": "Generative AI Chatbot",
+      "description": "Integrates Google Gemini Pro for conversational AI, providing answers to general queries and file-contextual questions.",
+      "files": [
+        "app.py"
+      ]
+    },
+    {
+      "name": "User Interface & Interaction",
+      "description": "Built with Streamlit, providing an interactive web interface for file uploads, input fields, and displaying analytical results and chatbot responses.",
+      "files": [
+        "app.py"
+      ]
+    },
+    {
+      "name": "External Service Integration",
+      "description": "Manages communication with third-party APIs for dictionary definitions and generative AI capabilities.",
+      "files": [
+        "app.py"
+      ]
+    },
+    {
+      "name": "Environment Configuration",
+      "description": "Manages sensitive information like API keys using environment variables loaded from a `.env` file.",
+      "files": [
+        "app.py",
+        ".env"
+      ]
+    }
+  ]
+}

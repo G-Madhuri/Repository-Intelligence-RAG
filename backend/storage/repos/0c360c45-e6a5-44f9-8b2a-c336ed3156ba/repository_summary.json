@@ -1,0 +1,46 @@
+{
+  "elevator_pitch": "DocuBot AI is an intelligent Streamlit-based web application designed to assist users with document analysis. It provides features like text summarization, legal term explanations, comprehensive text analytics, word cloud generation, and a Gemini-powered chatbot for general and file-contextual queries.",
+  "core_features": [
+    "Upload and analyze .txt, .docx, or .pdf documents",
+    "Summarize lengthy documents using HuggingFace transformers",
+    "Explain legal terms using dictionary API (with Google fallback)",
+    "Built-in Gemini-powered chatbot for general queries",
+    "Text analytics: word, sentence, paragraph, character counts",
+    "Most common words with stopwords removed",
+    "Word Cloud visualization",
+    "Flesch-Kincaid Grade readability score",
+    "File-contextual chatbot for uploaded documents"
+  ],
+  "main_workflows": [
+    "User uploads a document (.txt, .docx, .pdf) for analysis.",
+    "User requests a summary of the uploaded document.",
+    "User inputs a legal term to get its definition.",
+    "User interacts with the general-purpose chatbot in the sidebar.",
+    "User asks questions about the content of the uploaded file using the file-aware chatbot.",
+    "User downloads generated summaries or text statistics."
+  ],
+  "key_components": [
+    "Streamlit UI: Handles user interaction, file uploads, and displays results.",
+    "Text Extraction: `PyPDF2` for PDFs, `python-docx` for DOCX files.",
+    "HuggingFace Summarizer: `transformers` pipeline (DistilBART model) for text summarization.",
+    "Legal Term Explainer: `requests` to `dictionaryapi.dev` for definitions.",
+    "Google Gemini Chatbot: `google-generativeai` for general and file-contextual AI responses.",
+    "Text Analytics: `textstat` for readability, `nltk` for tokenization and stopword removal, `collections.Counter` for word frequency.",
+    "Word Cloud Generator: `wordcloud` and `matplotlib` for visualization.",
+    "Session State Management: Streamlit's `st.session_state` to maintain application state across reruns."
+  ],
+  "key_risks": [
+    "Single-file monolithic architecture: Can become hard to maintain and scale as features grow.",
+    "Reliance on external APIs: Downtime or changes in `dictionaryapi.dev` or Google Gemini API could break core functionality.",
+    "Large file processing: Summarization and text extraction for very large documents might hit memory limits or timeout issues, especially on free Streamlit hosting.",
+    "NLTK data download at runtime: Can cause delays on first run or in ephemeral environments if not pre-cached.",
+    "Lack of robust error handling for external API calls: Basic try-except blocks, but no retry mechanisms or circuit breakers.",
+    "Security: API key stored in `.env` is standard, but deployment considerations for securing it are important."
+  ],
+  "developer_start_points": [
+    "app.py: Contains all the application logic, UI definition, and integration points.",
+    "README.md: Provides a high-level overview, setup instructions, and feature list.",
+    "requirements.txt: Lists all Python dependencies, crucial for environment setup.",
+    ".env: To configure the Google Generative AI API key."
+  ]
+}
