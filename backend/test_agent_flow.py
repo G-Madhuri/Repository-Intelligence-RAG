@@ -116,7 +116,7 @@ async def run_tests():
     orchestrator = AgentOrchestrator(mock_client)
     
     print("\nExecuting orchestrator...")
-    result = await orchestrator.execute(profile, graph, summary, report, query)
+    result = await orchestrator.execute(profile, graph, summary, report, query, repo_id="test_repo")
     
     print("\n--- Test Result ---")
     print(f"Synthesized Answer: {result['answer']}")
@@ -135,6 +135,60 @@ async def run_tests():
     assert len(result['references']) > 0
     assert len(result['timeline']) == 4  # Planner + 2 Parallel Agents + Synthesizer
     print("\nIntegrity assertion checks passed successfully!")
+
+    # Validate fallback behavior when synthesized answer is empty
+    print("\nTesting fallback behavior for empty synthesized answer...")
+    def generate_json_with_empty_answer(prompt: str, response_schema: Type[BaseModel], temperature: float = 0.2) -> Dict[str, Any]:
+        if response_schema == PlannerDecision:
+            return {
+                "selected_agents": ["SecurityAgent", "ApiAgent"],
+                "execution_order": [["SecurityAgent", "ApiAgent"]],
+                "reasoning": "Query is about endpoints and credentials."
+            }
+        elif response_schema == AgentResponseSchema:
+            prompt_lower = prompt.lower()
+            if "security agent" in prompt_lower or "architecture agent" in prompt_lower or "quality agent" in prompt_lower or "onboarding agent" in prompt_lower:
+                return {
+                    "agent": "SecurityAgent",
+                    "confidence": 0.95,
+                    "answer": "Checked endpoints. Found jwt authentication.",
+                    "citations": ["backend/main.py:L48"],
+                    "reasoning": ["Parsed authentication middleware."]
+                }
+            elif "api agent" in prompt_lower or "api" in prompt_lower:
+                return {
+                    "agent": "ApiAgent",
+                    "confidence": 0.90,
+                    "answer": "Endpoints found: POST /api/analyze-url.",
+                    "citations": ["backend/main.py:L64"],
+                    "reasoning": ["Scanned fastapi routes."]
+                }
+            else:
+                return {
+                    "agent": "GenericAgent",
+                    "confidence": 0.80,
+                    "answer": "Generic analysis.",
+                    "citations": [],
+                    "reasoning": []
+                }
+        elif response_schema == SynthesizedResponse:
+            return {
+                "summary": "Fallback summary compiled from individual agents.",
+                "detailed_explanation": "",
+                "agent_contributions": [
+                    "SecurityAgent: Analyzed JWT usage.",
+                    "ApiAgent: Listed endpoints."
+                ],
+                "confidence_score": 0.50
+            }
+        return {}
+
+    mock_client.generate_json = generate_json_with_empty_answer  # type: ignore
+    fallback_result = await orchestrator.execute(profile, graph, summary, report, query, repo_id="test_repo")
+    assert fallback_result['answer'] != ""
+    assert "SecurityAgent" in fallback_result['answer']
+    assert "ApiAgent" in fallback_result['answer']
+    print("Fallback behavior validation passed successfully!")
 
 if __name__ == "__main__":
     asyncio.run(run_tests())

@@ -298,8 +298,20 @@ class AgentOrchestrator:
             if ref not in unique_references:
                 unique_references.append(ref)
 
+        answer = synth_res.get("detailed_explanation", "") or ""
+        if not answer:
+            logger.warning("Synthesized response was empty. Falling back to agent answers or summary.")
+            if agent_responses:
+                fallback_answer = "\n\n".join(
+                    f"### {r.get('agent', 'UnnamedAgent')}\n{r.get('answer', '') or 'No answer generated.'}"
+                    for r in agent_responses
+                ).strip()
+                answer = fallback_answer or synth_res.get("summary", "")
+            else:
+                answer = synth_res.get("summary", "No answer could be generated from the agents.")
+
         return {
-            "answer": synth_res.get("detailed_explanation", ""),
+            "answer": answer,
             "summary": synth_res.get("summary", ""),
             "agents_used": agents_used,
             "confidence": synth_res.get("confidence_score", 0.0),

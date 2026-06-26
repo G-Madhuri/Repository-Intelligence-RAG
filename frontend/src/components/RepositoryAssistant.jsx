@@ -85,7 +85,7 @@ export default function RepositoryAssistant({ repo_id, apiKey }) {
       const assistMsg = {
         id: `a-${Date.now()}`,
         role: 'assistant',
-        content: data.answer,
+        content: data.answer || data.summary || (data.agent_contributions || []).join('\n\n') || 'No answer returned from agent.',
         summary: data.summary,
         agents_used: data.agents_used,
         confidence: data.confidence,
