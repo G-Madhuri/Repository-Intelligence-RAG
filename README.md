@@ -189,6 +189,3 @@ After analysis, the platform generates:
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License.
