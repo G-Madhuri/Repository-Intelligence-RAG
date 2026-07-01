@@ -1,35 +1,36 @@
----
-title: Repository Intelligence Layer
-emoji: 🔍
-colorFrom: green
-colorTo: blue
-sdk: docker
-app_port: 7860
-pinned: false
-license: mit
----
-
 # Repository Intelligence Layer
 
-AI-powered repository analysis platform that clones or uploads codebases, generates structured intelligence artifacts with **Gemini 2.5 Flash**, and provides an interactive dashboard with graph visualization, semantic search, and multi-agent chat.
+### AI Agent System for Codebase Understanding & RAG-Based Repository Exploration
 
-![Dashboard Screenshot](./docs/screenshots/dashboard.png)
-<!-- Replace with actual screenshot after first run -->
+> Transform any GitHub repository into structured intelligence using static analysis, LLM reasoning, graph generation, and Retrieval-Augmented Generation (RAG).
 
-## Features
 
-- **GitHub cloning** — public and private repos (PAT authentication)
-- **ZIP upload** — drag-and-drop repository archives
-- **Repository scanner** — file tree, manifest parsing, static profiling
-- **Graph builder** — static import/dependency graph + LLM architecture graph
-- **Gemini analysis** — markdown report, profile, summary, and graph JSON
-- **Interactive dashboard** — report, summary, profile, graph viewer, repo tree
-- **AI Assistant** — multi-agent orchestration with RAG context
-- **Knowledge Explorer** — ChromaDB semantic search and conversation history
-- **Download endpoints** — export all intelligence artifacts
-- **Persistent memory** — artifacts saved to disk; ChromaDB vector index
+> 🌐 **Live Demo:** https://huggingface.co/spaces/G-Madhuri/Software_Engineer_Agent
 
-## Architecture
+---
+
+## 🚀 Overview
+
+Repository Intelligence Layer is a full-stack AI application that analyzes software repositories and converts them into structured, searchable knowledge.
+
+Users can provide a GitHub repository URL or upload a ZIP archive. The system performs static analysis, generates repository insights using **Gemini 2.5 Flash**, builds dependency graphs, creates a semantic knowledge base with **ChromaDB**, and enables conversational exploration through a multi-agent AI assistant.
+
+---
+
+## ✨ Features
+
+- Analyze GitHub repositories or ZIP uploads
+- Generate repository summaries, profiles, and architecture reports
+- Visualize dependency and architecture graphs
+- Semantic repository search using ChromaDB
+- Multi-agent conversational RAG assistant
+- Interactive React dashboard
+- Download generated intelligence artifacts
+- Docker & Hugging Face Spaces deployment
+
+---
+
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -78,144 +79,116 @@ flowchart LR
 └── docker-compose.yml # Local split-stack development
 ```
 
-## Installation
+## 🛠️ Tech Stack
 
-### Prerequisites
+| Category | Technologies |
+|----------|--------------|
+| Frontend | React, Vite |
+| Backend | FastAPI, Python |
+| AI | Gemini 2.5 Flash |
+| Vector Database | ChromaDB |
+| Graph Processing | NetworkX |
+| Deployment | Docker, Hugging Face Spaces |
 
-- Python 3.11+
-- Node.js 20+
-- Git (for repository cloning)
-- Gemini API key from [Google AI Studio](https://aistudio.google.com/)
+---
 
-### Local Setup
+## ⚙️ Installation
 
-1. **Clone the repository**
-
-```bash
-git clone <your-repo-url>
-cd "Software Engineer Agent"
-```
-
-2. **Configure environment**
+### Clone the repository
 
 ```bash
-cp .env.example backend/.env
-# Edit backend/.env and set GEMINI_API_KEY
+git clone <repository-url>
+cd Repository-Intelligence-Layer
 ```
 
-3. **Install backend dependencies**
+### Backend
 
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
-4. **Install frontend dependencies**
+Create a `.env` file:
 
-```bash
-cd ../frontend
-npm install
+```env
+GEMINI_API_KEY=your_api_key
 ```
 
-5. **Run locally (two terminals)**
+Run the backend:
 
-Terminal 1 — Backend:
 ```bash
-cd backend
-uvicorn main:app --reload --host 127.0.0.1 --port 8000
+uvicorn main:app --reload
 ```
 
-Terminal 2 — Frontend:
+### Frontend
+
 ```bash
 cd frontend
+npm install
 npm run dev
 ```
 
-Open **http://localhost:5173** — the Vite dev server proxies `/api` to the backend.
+---
 
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GEMINI_API_KEY` | Yes | Google Gemini API key for analysis, chat, and embeddings |
-| `CORS_ORIGINS` | No | Comma-separated allowed origins (default: `*`) |
-| `VITE_API_URL` | No | Frontend API base URL (empty = same origin / Vite proxy) |
-| `VITE_API_PROXY` | No | Vite dev proxy target (default: `http://localhost:8000`) |
-
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/health` | Health check |
-| `POST` | `/api/analyze-url` | Clone and analyze a GitHub repository |
-| `POST` | `/api/analyze-zip` | Upload and analyze a ZIP archive |
-| `GET` | `/api/download/{repo_id}/{type}` | Download artifact (`profile`, `graph`, `summary`, `report`) |
-| `POST` | `/api/chat` | Multi-agent chat with RAG |
-| `POST` | `/api/search` | Semantic search over indexed knowledge |
-| `GET` | `/api/memory?repo_id=` | Vector index statistics |
-| `GET` | `/api/conversations?repo_id=` | List chat sessions |
-| `GET` | `/api/conversations/{session_id}` | Session message history |
-| `GET` | `/api/tools` | Tool catalog |
-
-## Docker
-
-### Unified (Hugging Face / production)
+## 🐳 Docker
 
 ```bash
-docker build -t repo-intelligence .
-docker run -p 7860:7860 -e GEMINI_API_KEY=your_key repo-intelligence
+docker build -t repository-intelligence .
+
+docker run -p 7860:7860 \
+-e GEMINI_API_KEY=your_api_key \
+repository-intelligence
 ```
 
-Open **http://localhost:7860**
+---
 
-### Split stack (development)
+## 📊 Generated Artifacts
 
-```bash
-export GEMINI_API_KEY=your_key
-docker compose up --build
-```
+After analysis, the platform generates:
 
-- Frontend: **http://localhost:5173**
-- Backend: **http://localhost:8000**
+| Artifact | Description |
+|----------|-------------|
+| `repository_report.md` | Comprehensive repository analysis |
+| `repository_profile.json` | Languages, frameworks, dependencies |
+| `repository_summary.json` | Executive repository summary |
+| `repository_graph.json` | Architecture and dependency graph |
 
-## Hugging Face Spaces Deployment
+---
 
-This project is ready for **free deployment** on [Hugging Face Spaces](https://huggingface.co/spaces) using the Docker SDK.
+## 🔌 API Endpoints
 
-1. Create a new Space → select **Docker** as the SDK
-2. Push this repository (or connect GitHub)
-3. Ensure the root `Dockerfile` is used (builds frontend + serves backend on port **7860**)
-4. Add a Space secret: `GEMINI_API_KEY` = your Gemini API key
-5. Wait for the build to complete
+| Method | Endpoint |
+|--------|----------|
+| GET | `/api/health` |
+| POST | `/api/analyze-url` |
+| POST | `/api/analyze-zip` |
+| POST | `/api/chat` |
+| POST | `/api/search` |
 
-The Space will serve both the React dashboard and FastAPI backend from a single container.
+---
 
-### HF Space Settings
+## 🔒 Security
 
-- **SDK:** Docker
-- **App port:** 7860
-- **Secrets:** `GEMINI_API_KEY`
+- Secure ZIP extraction with path traversal protection
+- GitHub PAT support for private repositories
+- Temporary workspace cleanup
+- Environment-based API key management
 
-## Generated Artifacts
+---
 
-After analysis, the platform produces:
 
-| File | Description |
-|------|-------------|
-| `repository_report.md` | Full markdown intelligence report |
-| `repository_profile.json` | Languages, frameworks, APIs, modules, auth |
-| `repository_summary.json` | Elevator pitch, features, workflows, risks |
-| `repository_graph.json` | Architecture nodes, edges, flows, concepts |
+## ⭐ Key Highlights
 
-Artifacts are stored in `backend/storage/repos/{repo_id}/` and available via the dashboard download buttons.
+- Hybrid **Static Analysis + LLM Reasoning** pipeline
+- Multi-Agent AI architecture
+- Retrieval-Augmented Generation (RAG)
+- Semantic codebase search with ChromaDB
+- Interactive repository graph visualization
+- Fully containerized with Docker
+- Deployable on Hugging Face Spaces
 
-## Security
+---
 
-- ZIP extraction includes path-traversal protection
-- GitHub PAT tokens are redacted from error messages
-- Temporary clone/extract workspaces are cleaned up after analysis
-- Private repos require a valid GitHub Personal Access Token
+## 📄 License
 
-## License
-
-MIT
+This project is licensed under the MIT License.
