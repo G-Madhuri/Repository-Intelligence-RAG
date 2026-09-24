@@ -14,7 +14,6 @@ export default function InputForm({ onSubmit, loading }) {
   const [inputType, setInputType] = useState('url');
   const [repoUrl, setRepoUrl] = useState('');
   const [token, setToken] = useState('');
-  const [apiKey, setApiKey] = useState('');
   const [zipFile, setZipFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
@@ -44,10 +43,10 @@ export default function InputForm({ onSubmit, loading }) {
     e.preventDefault();
     if (inputType === 'url') {
       if (!repoUrl.trim()) return;
-      onSubmit({ type: 'url', url: repoUrl.trim(), token, apiKey: apiKey.trim() });
+      onSubmit({ type: 'url', url: repoUrl.trim(), token });
     } else {
       if (!zipFile) return;
-      onSubmit({ type: 'zip', file: zipFile, apiKey: apiKey.trim() });
+      onSubmit({ type: 'zip', file: zipFile });
     }
   };
 
@@ -71,7 +70,7 @@ export default function InputForm({ onSubmit, loading }) {
           marginBottom: '1.25rem',
         }}>
           <Sparkles size={12} />
-          Powered by Gemini 2.5 Flash + RAG
+          Powered by Gemini 2.5 Flash + Pinecone RAG
         </div>
         <h1 className="section-title" style={{ fontSize: '2rem', lineHeight: 1.2, marginBottom: '0.75rem' }}>
           Understand any codebase<br />in seconds
@@ -126,7 +125,7 @@ export default function InputForm({ onSubmit, loading }) {
                 <label className="form-label">
                   GitHub Personal Access Token
                   <span style={{ textTransform: 'none', color: 'var(--text-muted)', marginLeft: '0.5rem', fontWeight: 400 }}>
-                    (required for private repos)
+                    (optional for public repositories)
                   </span>
                 </label>
                 <div className="input-wrapper">
@@ -139,27 +138,6 @@ export default function InputForm({ onSubmit, loading }) {
                     onChange={e => setToken(e.target.value)}
                     disabled={loading}
                     id="github-token-input"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">
-                  Gemini API Key
-                  <span style={{ textTransform: 'none', color: 'var(--text-muted)', marginLeft: '0.5rem', fontWeight: 400 }}>
-                    (optional, useful if the server key is rate-limited)
-                  </span>
-                </label>
-                <div className="input-wrapper">
-                  <Cpu className="input-icon" size={17} />
-                  <input
-                    type="password"
-                    className="form-input"
-                    placeholder="Paste your Gemini API key"
-                    value={apiKey}
-                    onChange={e => setApiKey(e.target.value)}
-                    disabled={loading}
-                    id="gemini-api-key-input"
                   />
                 </div>
               </div>

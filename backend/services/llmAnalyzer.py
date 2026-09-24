@@ -9,7 +9,24 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# Define Pydantic response schemas to guarantee valid JSON structure from Gemini
+def clean_gemini_schema(schema: Any) -> Any:
+    """
+    Recursively removes 'additionalProperties', '$schema', and 'title' keys from Pydantic schema
+    for strict compatibility with Google Gemini Developer API mode.
+    """
+    if isinstance(schema, dict):
+        cleaned = {}
+        for key, value in schema.items():
+            if key in ["additionalProperties", "$schema", "title"]:
+                continue
+            cleaned[key] = clean_gemini_schema(value)
+        return cleaned
+    elif isinstance(schema, list):
+        return [clean_gemini_schema(item) for item in schema]
+    return schema
+
+
+# Define Pydantic response schemas
 class ProfileSchema(BaseModel):
     project_name: str = Field(description="Name of the software project")
     project_type: str = Field(description="Type of the project, e.g. web app, CLI, library, etc.")
@@ -33,11 +50,16 @@ class SummarySchema(BaseModel):
     developer_start_points: List[str] = Field(description="Suggested files or modules where a developer should start reading")
 
 
+class NodePropertySchema(BaseModel):
+    key: str = Field(description="Property key name")
+    value: str = Field(description="Property value")
+
+
 class NodeSchema(BaseModel):
     id: str = Field(description="Unique ID for the node, e.g. the path or the identifier")
     label: str = Field(description="Human-readable label for the node")
     type: str = Field(description="Type of the node (module, api, database, entrypoint, file)")
-    properties: Dict[str, Any] = Field(default_factory=dict, description="Custom properties metadata")
+    properties: List[NodePropertySchema] = Field(default_factory=list, description="List of key-value properties")
 
 
 class EdgeSchema(BaseModel):
@@ -89,60 +111,43 @@ class AnalysisResponse(BaseModel):
 
 def select_important_files(files: List[Dict[str, Any]], max_tokens: int = 150000) -> List[Dict[str, Any]]:
     """
-    Selects files that are most structurally important first (README, manifests, entry points,
-    routes, controllers, services, models) to prevent exceeding prompt token/context limits on
-    large repositories.
+    Selects files that are most structurally important first to prevent exceeding prompt token limits.
     """
     def get_file_priority(f: Dict[str, Any]) -> int:
         path_lower = f["path"].lower()
         parts = [p.strip() for p in path_lower.split("/") if p.strip()]
         filename = parts[-1] if parts else ""
         
-        # Priority 0: Critical manifests, config registries and high-level summaries
-        p0_exact = {
-            "readme.md", "readme.txt", "package.json", "requirements.txt", 
-            "pyproject.toml", "go.mod", "cargo.toml", "pom.xml", "build.gradle"
-        }
-        if filename in p0_exact:
-            return 0
+        if filename in ["readme.md", "readme.rst", "readme.txt"]: return 1
+        if filename in ["package.json", "requirements.txt", "pyproject.toml", "cargo.toml", "go.mod", "pom.xml", "build.gradle", "dockerfile"]: return 2
+        if filename in ["main.py", "app.py", "index.js", "main.go", "server.js", "app.ts", "index.ts", "main.rs"]: return 3
+        
+        for part in parts:
+            if part in ["routes", "api", "controllers", "services", "models", "src"]: return 4
             
-        # Priority 1: Key execution entry points
-        p1_exact = {
-            "main.py", "app.py", "server.js", "index.js", "wsgi.py", "asgi.py"
-        }
-        if filename in p1_exact:
-            return 1
-            
-        # Priority 2: Key architectural components / directories
-        p2_dirs = {
-            "routes", "controllers", "services", "models", "api", "handlers", "views"
-        }
-        if any(d in parts for d in p2_dirs):
-            return 2
-            
-        # Priority 3: Other general code files
-        return 3
+        if filename.endswith((".py", ".js", ".ts", ".jsx", ".tsx", ".go", ".java", ".rs", ".cpp", ".c", ".h")): return 5
+        return 10
 
     sorted_files = sorted(files, key=get_file_priority)
-    
     selected = []
-    current_size = 0
-    # Estimate: roughly 4 characters per token
-    char_limit = max_tokens * 4
-    
+    current_chars = 0
+    max_chars = max_tokens * 4
+
     for f in sorted_files:
-        content_len = len(f.get("content", ""))
-        # Filter files larger than 50KB to protect context window spacing
-        if f["size"] > 50 * 1024:
+        content = f.get("content", "")
+        if not content: continue
+        
+        if len(content) > 50000:
             logger.info(f"Skipping file content for {f['path']} - file size is larger than 50KB.")
             continue
-            
-        if current_size + content_len <= char_limit:
-            selected.append(f)
-            current_size += content_len
-        else:
+
+        if current_chars + len(content) > max_chars:
             logger.info(f"Skipping content of file {f['path']} due to context size limit.")
-            
+            continue
+
+        selected.append(f)
+        current_chars += len(content)
+
     return selected
 
 
@@ -154,32 +159,24 @@ async def analyze_repository(
     api_key: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Generates a Repository Intelligence Report, profile.json, summary.json, and graph.json
-    using Google Gemini via the new google-genai SDK.
+    Calls Gemini 2.5 Flash using google-genai SDK to analyze codebase context
+    and return structured JSON matching AnalysisResponse schema.
     """
-    # API Key selection: Try parameter first, then environment variable
-    key = api_key or os.environ.get("GEMINI_API_KEY")
-    if not key:
-        raise ValueError("Gemini API Key is missing. Please configure it in the backend or frontend.")
-    
-    # Import and configure the new google-genai SDK
-    from google import genai
-    
-    client = genai.Client(api_key=key)
-    
-    # Select important files content to keep under budget
-    context_files = select_important_files(flat_files)
-    
-    # Format files for prompt ingestion
-    formatted_code = ""
-    for f in context_files:
-        formatted_code += f"\n\n--- File: {f['path']} ---\n"
-        formatted_code += f.get("content", "")
-        formatted_code += "\n--- End File ---"
+    gemini_key = api_key or os.environ.get("GEMINI_API_KEY")
+    if not gemini_key:
+        raise Exception("Gemini API key is required. Please set GEMINI_API_KEY in environment.")
 
-    # Convert tree structure to JSON string
+    from google import genai
+    client = genai.Client(api_key=gemini_key)
+
+    selected_files = select_important_files(flat_files)
+    formatted_code_blocks = []
+    for f in selected_files:
+        formatted_code_blocks.append(f"--- FILE: {f['path']} ---\n{f['content']}")
+    
+    formatted_code = "\n\n".join(formatted_code_blocks)
+
     tree_str = json.dumps(tree_structure, indent=2)
-    # Convert static profile to JSON string
     profile_str = json.dumps(static_profile, indent=2)
 
     prompt = f"""
@@ -202,42 +199,41 @@ You must analyze the repository context and return the structured outputs matchi
 """
 
     try:
-        logger.info("Sending request to Gemini via google-genai SDK with response_schema...")
+        logger.info("Sending request to Gemini via google-genai SDK with clean response_schema...")
         
-        # Use the new client-based API with the response_schema configuration parameter
+        # Clean Pydantic schema for strict Gemini Developer API compatibility
+        clean_schema = clean_gemini_schema(AnalysisResponse.model_json_schema())
+
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
             config={
                 'response_mime_type': 'application/json',
-                'response_schema': AnalysisResponse,
+                'response_schema': clean_schema,
                 'temperature': 0.2
             }
         )
         
-        # Parse the structured JSON response
         response_text = response.text
         if not response_text:
-            raise Exception("Gemini returned an empty response. Please check your API key and quota.")
+            raise Exception("Gemini returned an empty response text.")
         
         result_json = json.loads(response_text)
         return result_json
         
     except json.JSONDecodeError as e:
         logger.error(f"Failed to decode response from Gemini as JSON: {e}")
-        raise Exception(f"Gemini API returned an invalid JSON response structure. Please retry. Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Gemini API returned invalid JSON structure: {str(e)}")
     except Exception as e:
         error_msg = str(e)
         logger.error(f"Error communicating with Gemini: {error_msg}")
-        # Provide more helpful error messages
-        if "API_KEY_INVALID" in error_msg or "401" in error_msg:
-            raise Exception(
-                "Invalid Gemini API Key. Please get a valid key from https://aistudio.google.com/apikey "
-                "and set it in the .env file or pass it via the frontend."
+        if "401" in error_msg or "UNAUTHENTICATED" in error_msg:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=400,
+                detail="Gemini API Key Authentication Failed (401). Please check your GEMINI_API_KEY in backend/.env."
             )
-        elif "RESOURCE_EXHAUSTED" in error_msg or "429" in error_msg:
-            raise Exception(
-                "Gemini API rate limit exceeded. Please wait a moment and try again, "
-                "or upgrade your API quota at https://aistudio.google.com."
-            )
-        raise Exception(f"Gemini analysis execution failed: {error_msg}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Gemini analysis execution failed: {error_msg}")
+
+

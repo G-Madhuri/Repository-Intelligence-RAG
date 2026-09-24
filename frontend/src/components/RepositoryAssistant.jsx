@@ -5,6 +5,7 @@ import {
   HelpCircle, Cpu, Award, Activity, ChevronRight
 } from 'lucide-react';
 import { apiUrl } from '../api';
+import { supabase } from '../App';
 
 const SUGGESTED = [
   'How does authentication work?',
@@ -59,6 +60,10 @@ export default function RepositoryAssistant({ repo_id, apiKey }) {
     setInput('');
 
     const headers = { 'Content-Type': 'application/json' };
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
     if (apiKey) headers['x-gemini-key'] = apiKey;
 
     try {

@@ -5,6 +5,7 @@ import {
   Activity, BookOpen, Play, Layers, Shield, Globe
 } from 'lucide-react';
 import { apiUrl } from '../api';
+import { supabase } from '../App';
 
 const CATEGORY_OPTIONS = [
   { value: '', label: 'All Categories' },
@@ -68,8 +69,12 @@ export default function KnowledgeExplorer({ repo_id, apiKey }) {
   const [sessionHistory, setSessionHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  const headers = () => {
+  const getAuthHeaders = async () => {
     const h = { 'Content-Type': 'application/json' };
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      h['Authorization'] = `Bearer ${session.access_token}`;
+    }
     if (apiKey) h['x-gemini-key'] = apiKey;
     return h;
   };
@@ -82,7 +87,8 @@ export default function KnowledgeExplorer({ repo_id, apiKey }) {
   const loadMemory = async () => {
     setMemoryLoading(true);
     try {
-      const r = await fetch(apiUrl(`/api/memory?repo_id=${repo_id}`));
+      const headers = await getAuthHeaders();
+      const r = await fetch(apiUrl(`/api/memory?repo_id=${repo_id}`), { headers });
       setMemoryInfo(await r.json());
     } catch { setMemoryInfo(null); }
     setMemoryLoading(false);
@@ -91,7 +97,8 @@ export default function KnowledgeExplorer({ repo_id, apiKey }) {
   const loadConversations = async () => {
     setConvsLoading(true);
     try {
-      const r = await fetch(apiUrl(`/api/conversations?repo_id=${repo_id}`));
+      const headers = await getAuthHeaders();
+      const r = await fetch(apiUrl(`/api/conversations?repo_id=${repo_id}`), { headers });
       const d = await r.json();
       setConversations(d.sessions || []);
     } catch { setConversations([]); }
@@ -101,7 +108,8 @@ export default function KnowledgeExplorer({ repo_id, apiKey }) {
   const loadSessionHistory = async (sessionId) => {
     setHistoryLoading(true);
     try {
-      const r = await fetch(apiUrl(`/api/conversations/${sessionId}`));
+      const headers = await getAuthHeaders();
+      const r = await fetch(apiUrl(`/api/conversations/${sessionId}`), { headers });
       const data = await r.json();
       if (!r.ok) throw new Error(data.detail);
       setSessionHistory(data.history || []);
@@ -128,325 +136,179 @@ export default function KnowledgeExplorer({ repo_id, apiKey }) {
     setSearchLoading(true);
     setSearchError(null);
     setSearchResults([]);
-    setSearchLatency(null);
+
     try {
-      const body = { repo_id, query: searchQuery.trim(), top_k: searchTopK };
-      if (searchCategory) body.category = searchCategory;
-      const r = await fetch(apiUrl('/api/search'), { method: 'POST', headers: headers(), body: JSON.stringify(body) });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.detail || 'Search failed');
-      setSearchResults(d.results || []);
-      setSearchLatency(d.latency_ms);
-    } catch (e) {
-      setSearchError(e.message);
+      const headers = await getAuthHeaders();
+      const r = await fetch(apiUrl('/api/search'), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          repo_id,
+          query: searchQuery.trim(),
+          top_k: Number(searchTopK),
+          category: searchCategory || null,
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || 'Search failed');
+      setSearchResults(data.results || []);
+      setSearchLatency(data.latency_ms);
+    } catch (err) {
+      setSearchError(err.message);
+    } finally {
+      setSearchLoading(false);
     }
-    setSearchLoading(false);
   };
 
   return (
-    <div className="ke-container">
-      {/* Sub-tabs */}
-      <div className="ke-tabs">
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            className={`ke-tab-btn ${activeTab === t.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(t.id)}
-            id={`ke-tab-${t.id}`}
-          >
-            {t.icon} {t.label}
-          </button>
-        ))}
+    <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div style={{
+            width: '32px', height: '32px', borderRadius: '8px',
+            background: 'var(--accent-indigo)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', color: '#fff'
+          }}>
+            <Database size={16} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>Knowledge Explorer</h3>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              Pinecone Vector Search, Session History & MCP Catalog
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.35rem', background: 'rgba(0,0,0,0.04)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.4rem',
+                padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem',
+                fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.15s ease',
+                background: activeTab === tab.id ? '#fff' : 'transparent',
+                color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-muted)',
+                boxShadow: activeTab === tab.id ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+              }}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* ── SEMANTIC SEARCH ── */}
       {activeTab === 'search' && (
-        <div className="ke-panel">
-          <div className="ke-panel-title">
-            <Search size={16} style={{ color: 'var(--accent-teal)' }} />
-            Semantic Knowledge Search
-          </div>
-          <p className="ke-panel-desc">
-            Search across all indexed repository knowledge using natural language.
-            Results are ranked by cosine similarity score.
-          </p>
-
-          <form onSubmit={handleSearch} className="search-form-row">
-            <input
-              type="text"
-              className="ke-input"
-              placeholder="e.g. 'JWT authentication middleware' or 'database connection'"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              id="semantic-search-input"
-            />
-            <select className="ke-select" value={searchCategory} onChange={e => setSearchCategory(e.target.value)}>
-              {CATEGORY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <select className="ke-select ke-select-sm" value={searchTopK} onChange={e => setSearchTopK(Number(e.target.value))}>
-              {[3, 5, 8, 10].map(n => <option key={n} value={n}>Top {n}</option>)}
-            </select>
-            <button
-              type="submit"
-              className="ke-search-btn"
-              disabled={searchLoading || !searchQuery.trim()}
-              id="semantic-search-btn"
+        <div>
+          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
+              <Search size={15} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input
+                type="text"
+                placeholder="Ask a question or enter keywords (e.g. 'JWT verification', 'FastAPI router')..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{ width: '100%', paddingLeft: '2.25rem', paddingRight: '0.75rem', height: '38px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}
+              />
+            </div>
+            <select
+              value={searchCategory}
+              onChange={e => setSearchCategory(e.target.value)}
+              style={{ height: '38px', padding: '0 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.82rem', background: '#fff' }}
             >
-              {searchLoading ? <RefreshCw size={14} className="spin-slow" /> : <Search size={14} />}
-              {searchLoading ? 'Searching…' : 'Search'}
+              {CATEGORY_OPTIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+            <button type="submit" className="btn-primary" disabled={searchLoading} style={{ height: '38px', padding: '0 1rem', fontSize: '0.85rem' }}>
+              {searchLoading ? 'Searching...' : 'Search Vectors'}
             </button>
           </form>
 
-          {searchError && <div className="ke-error-box">{searchError}</div>}
-
-          {searchLatency != null && !searchLoading && (
-            <div className="ke-latency-badge">
-              <Clock size={11} />
-              {searchResults.length} results · {searchLatency}ms
+          {searchError && (
+            <div style={{ padding: '0.75rem', borderRadius: '8px', background: '#FEF2F2', border: '1px solid #FECDD3', color: '#991B1B', fontSize: '0.82rem', marginBottom: '1rem' }}>
+              {searchError}
             </div>
           )}
 
-          <div className="search-results-list">
-            {searchResults.map((r, i) => {
-              const cs = getCatStyle(r.metadata?.category);
-              const sim = r.similarity;
-              const fillColor = sim > 0.8 ? 'var(--accent-green)' : sim > 0.6 ? 'var(--accent-teal)' : 'var(--accent-amber)';
-              return (
-                <div key={i} className="search-result-card">
-                  <div className="src-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                      <span className="src-category-tag" style={{ color: cs.color, background: cs.bg, borderColor: cs.border }}>
-                        {r.metadata?.category || 'general'}
-                      </span>
-                      {r.metadata?.path && <span className="src-path-tag">{r.metadata.path}</span>}
-                    </div>
-                    <div className="src-score-bar-wrap">
-                      <span className="src-score-label">{Math.round(sim * 100)}%</span>
-                      <div className="src-score-bg">
-                        <div className="src-score-fill" style={{ width: `${sim * 100}%`, background: fillColor }} />
-                      </div>
-                    </div>
-                  </div>
-                  <pre className="src-content">{r.content}</pre>
-                </div>
-              );
-            })}
-            {!searchLoading && searchResults.length === 0 && searchLatency != null && (
-              <div className="ke-empty">No results found. Try different search terms or select a different category.</div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── MEMORY INSPECTOR ── */}
-      {activeTab === 'memory' && (
-        <div className="ke-panel">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <div className="ke-panel-title" style={{ marginBottom: 0 }}>
-              <Database size={16} style={{ color: 'var(--accent-indigo)' }} />
-              Vector Memory Inspector
-            </div>
-            <button className="ke-refresh-btn" onClick={loadMemory} disabled={memoryLoading}>
-              <RefreshCw size={13} className={memoryLoading ? 'spin-slow' : ''} /> Refresh
-            </button>
-          </div>
-          <p className="ke-panel-desc">
-            Inspect the repository's semantic knowledge stored in ChromaDB. Each chunk is
-            tagged with category metadata for precise retrieval.
-          </p>
-
-          {memoryLoading && (
-            <div className="ke-spinner-row">
-              <RefreshCw size={18} className="spin-slow" style={{ color: 'var(--accent-teal)' }} />
-              Loading memory info…
-            </div>
-          )}
-
-          {memoryInfo && !memoryLoading && (
-            <div className="memory-stats-grid">
-              <div className="memory-stat-card">
-                <div className="msc-label">Indexed Chunks</div>
-                <div className="msc-value">{memoryInfo.indexed_chunks?.toLocaleString()}</div>
-                <div className="msc-sub">ChromaDB documents</div>
+          {searchResults.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                <span>Found <strong>{searchResults.length}</strong> matching vector chunks</span>
+                {searchLatency && <span>Search latency: <strong>{searchLatency}ms</strong></span>}
               </div>
-              <div className="memory-stat-card">
-                <div className="msc-label">Repository ID</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)', wordBreak: 'break-all', marginTop: '0.25rem' }}>
-                  {memoryInfo.repo_id}
-                </div>
-              </div>
-              <div className="memory-stat-card">
-                <div className="msc-label">Storage Path</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-secondary)', wordBreak: 'break-all', marginTop: '0.25rem' }}>
-                  {memoryInfo.storage_path}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="ke-info-box" style={{ marginBottom: '1rem' }}>
-            <BookOpen size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-            <span>
-              The knowledge index contains chunked embeddings of the intelligence report, source files,
-              architecture concepts, API endpoints, dependencies, business flows, and concepts.
-              Embeddings are generated using Gemini <code>text-embedding-004</code>.
-            </span>
-          </div>
-
-          <div className="ke-category-legend">
-            <div className="ke-legend-title">Indexed Categories</div>
-            <div className="ke-legend-grid">
-              {CATEGORY_OPTIONS.filter(o => o.value).map(o => {
-                const cs = getCatStyle(o.value);
-                return (
-                  <div key={o.value} className="ke-legend-item">
-                    <span className="ke-legend-dot" style={{ background: cs.color }} />
-                    {o.label}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── CONVERSATIONS ── */}
-      {activeTab === 'conversations' && (
-        <div className="ke-panel">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <div className="ke-panel-title" style={{ marginBottom: 0 }}>
-              <MessageSquare size={16} style={{ color: 'var(--accent-green)' }} />
-              Conversation History
-            </div>
-            <button className="ke-refresh-btn" onClick={loadConversations} disabled={convsLoading}>
-              <RefreshCw size={13} className={convsLoading ? 'spin-slow' : ''} /> Refresh
-            </button>
-          </div>
-          <p className="ke-panel-desc">
-            All AI Assistant chat sessions for this repository, stored in conversation memory.
-          </p>
-
-          {convsLoading && (
-            <div className="ke-spinner-row">
-              <RefreshCw size={18} className="spin-slow" style={{ color: 'var(--accent-teal)' }} />
-              Loading conversations…
-            </div>
-          )}
-
-          {!convsLoading && conversations.length === 0 && (
-            <div className="ke-empty">
-              No conversations yet. Start chatting in the AI Assistant tab to see sessions here.
-            </div>
-          )}
-
-          <div className="conv-list">
-            {conversations.map((s, idx) => (
-              <div
-                key={s.session_id}
-                className={`conv-item ${selectedSession === s.session_id ? 'selected' : ''}`}
-                onClick={() => handleSelectSession(s.session_id)}
-                id={`conv-item-${idx}`}
-              >
-                <div className="conv-item-header">
-                  <span className="conv-idx">#{idx + 1}</span>
-                  <span className="conv-summary">{s.summary || 'Untitled Session'}</span>
-                  <span className="conv-count">{s.message_count} msgs</span>
-                  <ChevronRight
-                    size={14}
-                    style={{
-                      transition: 'transform 0.2s',
-                      transform: selectedSession === s.session_id ? 'rotate(90deg)' : 'none',
-                      color: 'var(--text-muted)',
-                      flexShrink: 0,
-                    }}
-                  />
-                </div>
-                <div className="conv-item-meta">
-                  <span className="conv-id">{s.session_id?.substring(0, 8)}…</span>
-                  <span className="conv-time">{new Date(s.last_updated * 1000).toLocaleString()}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {selectedSession && (
-            <div style={{ marginTop: '1.25rem' }}>
-              <div className="ke-panel-title" style={{ marginBottom: '0.75rem' }}>
-                <MessageSquare size={14} style={{ color: 'var(--accent-teal)' }} />
-                Session Messages
-              </div>
-              {historyLoading && (
-                <div className="ke-spinner-row">
-                  <RefreshCw size={16} className="spin-slow" style={{ color: 'var(--accent-teal)' }} />
-                  Loading message history…
-                </div>
-              )}
-              {!historyLoading && sessionHistory.length === 0 && (
-                <div className="ke-empty">No messages in this session.</div>
-              )}
-              {!historyLoading && sessionHistory.length > 0 && (
-                <div className="conv-list" style={{ maxHeight: 360 }}>
-                  {sessionHistory.map((msg, i) => (
-                    <div key={i} className="search-result-card">
-                      <div className="src-header">
-                        <span className={`src-category-tag`} style={{
-                          color: msg.role === 'user' ? 'var(--accent-teal-dk)' : 'var(--accent-indigo)',
-                          background: msg.role === 'user' ? '#E6F7F7' : '#EEF2FF',
-                          borderColor: msg.role === 'user' ? '#A8D8D8' : '#C7D2FE',
-                        }}>
-                          {msg.role}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {searchResults.map((item, idx) => {
+                  const cat = item.metadata?.category || 'chunk';
+                  const style = getCatStyle(cat);
+                  return (
+                    <div key={item.id || idx} style={{ border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.85rem', background: '#FAFAFA' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '4px', background: style.bg, color: style.color, border: `1px solid ${style.border}`, textTransform: 'uppercase' }}>
+                          {cat}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                          Similarity: {(item.similarity * 100).toFixed(1)}%
                         </span>
                       </div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                        {msg.content}
-                      </div>
+                      <pre style={{ margin: 0, fontSize: '0.82rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'var(--font-mono)', background: '#fff', padding: '0.65rem', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+                        {item.content}
+                      </pre>
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
       )}
 
-      {/* ── TOOL CATALOG ── */}
-      {activeTab === 'tools' && (
-        <div className="ke-panel">
-          <div className="ke-panel-title">
-            <Zap size={16} style={{ color: 'var(--accent-amber)' }} />
-            Tool Catalog (MCP-Ready)
-          </div>
-          <p className="ke-panel-desc">
-            These tools are available to the Planner Agent during orchestration.
-            Interfaces are compatible with Model Context Protocol (MCP) and Google ADK.
-          </p>
-
-          <div className="tool-catalog-grid">
-            {TOOLS.map(t => (
-              <div key={t.name} className="tool-card" id={`tool-${t.name}`}>
-                <div
-                  className="tc-icon-wrap"
-                  style={{ background: t.bg, borderColor: t.border, color: t.color }}
-                >
-                  {t.icon}
+      {activeTab === 'memory' && (
+        <div>
+          {memoryLoading ? <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Loading vector stats...</div> :
+            memoryInfo ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Indexed Chunks</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-teal)' }}>{memoryInfo.indexed_chunks}</div>
                 </div>
-                <div className="tc-body">
-                  <div className="tc-name">{t.name}</div>
-                  <div className="tc-desc">{t.desc}</div>
+                <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Pinecone Index</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>{memoryInfo.index_name || 'discord-agent-knowledge'}</div>
                 </div>
-                <span className="tc-badge">execute()</span>
               </div>
-            ))}
-          </div>
+            ) : <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No vector stats available.</div>
+          }
+        </div>
+      )}
 
-          <div className="ke-info-box" style={{ marginTop: '1.25rem' }}>
-            <Globe size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-            <span>
-              Each tool implements a <code>BaseTool</code> interface with <code>name</code>,
-              <code>description</code>, and <code>execute(**kwargs)</code>. This design is
-              forward-compatible with Google ADK, LangGraph, CrewAI, and MCP server registration.
-            </span>
-          </div>
+      {activeTab === 'conversations' && (
+        <div>
+          {convsLoading ? <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Loading sessions...</div> :
+            conversations.length === 0 ? <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No conversation sessions found.</div> : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {conversations.map(sess => (
+                  <div key={sess.session_id} onClick={() => handleSelectSession(sess.session_id)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: selectedSession === sess.session_id ? '#EEF2FF' : '#fff', cursor: 'pointer' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Session: {sess.session_id}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Messages: {sess.message_count}</div>
+                  </div>
+                ))}
+              </div>
+            )
+          }
+        </div>
+      )}
+
+      {activeTab === 'tools' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+          {TOOLS.map(t => (
+            <div key={t.name} style={{ padding: '0.85rem', borderRadius: '8px', border: `1px solid ${t.border}`, background: t.bg }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, fontSize: '0.85rem', color: t.color, marginBottom: '0.35rem' }}>
+                {t.icon} {t.name}
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{t.desc}</div>
+            </div>
+          ))}
         </div>
       )}
     </div>

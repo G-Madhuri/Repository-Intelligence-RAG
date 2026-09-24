@@ -18,26 +18,32 @@ class KnowledgeRetriever:
         category: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
-        Runs semantic search on ChromaDB for the repo using the query.
-        Supports filtering by metadata 'category'.
+        Runs semantic search on Pinecone vector database for the repository namespace.
+        Supports dense vector embedding or integrated Pinecone inference query.
         """
         logger.info(f"Retrieving context for repo {repo_id}, query: '{query}' (category filter: {category}, top_k: {top_k})")
         
         try:
-            # Generate query vector using embedder
+            where_filter = {"category": category} if category else None
+            
+            # Generate query vector if embedding service is available
             query_embedding = self.embedder.embed_text(query)
             
-            # Setup filter
-            where_filter = None
-            if category:
-                where_filter = {"category": category}
-                
-            return self.store.query_documents(
-                repo_id=repo_id,
-                query_embedding=query_embedding,
-                top_k=top_k,
-                where_filter=where_filter
-            )
+            if query_embedding:
+                return self.store.query_documents(
+                    repo_id=repo_id,
+                    query_embedding=query_embedding,
+                    top_k=top_k,
+                    where_filter=where_filter
+                )
+            else:
+                # Use Pinecone integrated inference search (text-based)
+                return self.store.query_documents(
+                    repo_id=repo_id,
+                    query_text=query,
+                    top_k=top_k,
+                    where_filter=where_filter
+                )
         except Exception as e:
-            logger.error(f"Failed to retrieve vector search results: {e}")
+            logger.error(f"Failed to retrieve vector search results from Pinecone: {e}")
             return []
