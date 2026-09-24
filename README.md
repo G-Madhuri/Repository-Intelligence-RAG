@@ -9,213 +9,290 @@ pinned: false
 license: mit
 ---
 
-# Repository Intelligence Layer
+# 🔍 Repository Intelligence Layer
 
-AI-powered repository analysis platform that clones or uploads codebases, generates structured intelligence artifacts with **Gemini 2.5 Flash**, and provides an interactive dashboard with graph visualization, semantic search, and multi-agent chat.
+### AI-powered codebase analysis with multi-agent RAG
 
-![Dashboard Screenshot](./docs/screenshots/dashboard.png)
-<!-- Replace with actual screenshot after first run -->
+Turn any GitHub repository or ZIP archive into structured intelligence (an architecture report, a tech-stack profile, a dependency graph), then ask questions about it through a team of specialist AI agents grounded in the actual code.
 
-## Features
+> 🌐 **Live Demo:** https://huggingface.co/spaces/G-Madhuri/Software_Engineer_Agent
 
-- **GitHub cloning** — public and private repos (PAT authentication)
-- **ZIP upload** — drag-and-drop repository archives
-- **Repository scanner** — file tree, manifest parsing, static profiling
-- **Graph builder** — static import/dependency graph + LLM architecture graph
-- **Gemini analysis** — markdown report, profile, summary, and graph JSON
-- **Interactive dashboard** — report, summary, profile, graph viewer, repo tree
-- **AI Assistant** — multi-agent orchestration with RAG context
-- **Knowledge Explorer** — ChromaDB semantic search and conversation history
-- **Download endpoints** — export all intelligence artifacts
-- **Persistent memory** — artifacts saved to disk; ChromaDB vector index
+---
 
-## Architecture
+## 🚀 Overview
+
+Getting to grips with an unfamiliar codebase is slow. You read the README, hunt for entry points, trace imports and work out the API surface and auth model.
+
+This project automates that first pass:
+
+1. **Ingest:** clone a GitHub repo (public, or private with a PAT) or upload a ZIP into an isolated temporary workspace.
+2. **Static analysis:** walk the file tree, parse manifests (`package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`), detect languages, frameworks, databases and infrastructure, and build an import graph.
+3. **LLM reasoning:** send the most important files, together with the static profile, to **Gemini 2.5 Flash** using a strict JSON schema. It returns a report, a profile, a summary and an architecture graph.
+4. **Index:** chunk the report, the extracted knowledge and the source code, embed them with **Pinecone Inference (`llama-text-embed-v2`)**, and store them in a per-repository **Pinecone** namespace.
+5. **Chat:** a **Planner agent** chooses which specialist agents and tools to run. The agents run in parallel with the retrieved code as context, and a **Synthesizer** merges their output into one answer with citations, a confidence score and a full execution timeline.
+
+Users sign in with **Supabase Auth**. Every repository's data expires automatically after **1 hour**.
+
+---
+
+## ✨ Features
+
+- 🔐 **Supabase authentication:** email/password sign-in, with the JWT verified server-side on every API call
+- 📦 **GitHub URL or ZIP upload:** private repos via Personal Access Token, and ZIP extraction protected against path traversal (zip-slip)
+- 🧭 **Static profiling:** languages, frameworks, databases, package managers and infrastructure (Docker, CI, Kubernetes, Serverless)
+- 🧠 **Gemini 2.5 Flash analysis:** schema-validated Markdown report, profile, summary and architecture graph (entry points, business flows, critical paths, concepts)
+- 🕸️ **Interactive architecture graph:** layered SVG view with business-flow and critical-path highlighting
+- 🤖 **Multi-agent AI assistant:** Planner, then 6 specialists (Architecture, Security, API, Dependency, Quality, Onboarding), then a Synthesizer
+- 🔎 **Knowledge Explorer:** semantic search with category filters, index statistics and conversation history
+- 🧾 **Explainable answers:** planner reasoning, per-agent latency and confidence, retrieved code chunks and references
+- ⏱️ **1-hour data TTL:** a background job purges expired repositories from Pinecone and Postgres
+- 🐳 **Single-container deployment:** FastAPI serves both the API and the built React app (Hugging Face Spaces)
+
+---
+
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
-  subgraph Input
-    URL[GitHub URL + PAT]
-    ZIP[ZIP Upload]
+  subgraph Client
+    UI[React + Vite SPA]
   end
-  subgraph Pipeline
-    Scan[Repository Scanner]
-    Profile[Repository Profiler]
-    Graph[Graph Builder]
+  subgraph Backend["FastAPI (modular monolith)"]
+    Auth[Supabase JWT check]
+    Ingest[Scanner → Profiler → Graph Builder]
     LLM[Gemini Analyzer]
-    Mem[Memory Layer]
-    Chroma[ChromaDB Index]
+    Index[Knowledge Index Builder]
+    Orch[Agent Orchestrator]
+    Sched[APScheduler TTL purge]
   end
-  subgraph Frontend
-    Tree[Repo Tree]
-    Dash[Dashboard]
-    GraphV[Graph Viewer]
-    Chat[AI Assistant]
+  subgraph Services
+    SB[(Supabase Auth + Postgres)]
+    GH[GitHub API / git]
+    GEM[Gemini 2.5 Flash]
+    PC[(Pinecone + Inference)]
+    LS[LangSmith]
   end
-  URL --> Scan
-  ZIP --> Scan
-  Scan --> Profile
-  Profile --> Graph
-  Graph --> LLM
-  LLM --> Mem
-  LLM --> Chroma
-  Mem --> Dash
-  Scan --> Tree
-  Mem --> GraphV
-  Chroma --> Chat
+
+  UI -- Bearer JWT --> Auth --> SB
+  UI --> Ingest --> GH
+  Ingest --> LLM --> GEM
+  LLM --> Index --> PC
+  UI --> Orch
+  Orch --> PC
+  Orch --> GEM
+  Orch -. traces .-> LS
+  Sched --> SB
+  Sched --> PC
 ```
 
-## Project Structure
+### Chat pipeline
 
 ```
-├── backend/           # FastAPI application
-│   ├── main.py        # API routes
-│   ├── services/      # Scanner, profiler, graph builder, LLM, memory
-│   ├── agents/        # Multi-agent orchestration
-│   ├── memory/        # ChromaDB, RAG, conversations
-│   └── tools/         # MCP-ready tool registry
-├── frontend/          # React + Vite dashboard
-├── Dockerfile         # Unified build for Hugging Face Spaces (port 7860)
-└── docker-compose.yml # Local split-stack development
+Question
+  → PlannerAgent (decides memory / semantic search / tools / agents / execution order)
+  → Conversation memory + Pinecone top-k retrieval + cached tool lookups
+  → Specialist agents run in parallel stages (with retries)
+  → ResponseSynthesizer (merges, dedupes, scores confidence)
+  → Answer + citations + timeline
 ```
 
-## Installation
+Every stage has a fallback. If the planner fails, all agents run. Failed agents are retried and then skipped. If the synthesizer fails, the agents' answers are concatenated instead.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| Frontend | React 18, Vite 5, Supabase JS, marked, lucide-react, custom CSS |
+| Backend | Python, FastAPI, Uvicorn, Pydantic v2, httpx, APScheduler |
+| AI / LLM | Gemini 2.5 Flash (`google-genai` + LangChain `langchain-google-genai`), structured output |
+| RAG | Pinecone (serverless index, namespace per repo), Pinecone Inference `llama-text-embed-v2` (1024-d) |
+| Auth & DB | Supabase Auth, Supabase PostgreSQL (psycopg2), Row Level Security |
+| Observability | LangSmith tracing, Python logging |
+| Deployment | Docker (multi-stage), Hugging Face Spaces, docker-compose + nginx for local dev |
+
+---
+
+## 📁 Project Structure
+
+```
+├── backend/
+│   ├── main.py                # FastAPI app, routes, TTL scheduler, static file serving
+│   ├── auth.py                # Supabase JWT verification dependency
+│   ├── migrate_supabase.py    # Postgres schema + RLS policies
+│   ├── services/              # Scanner, profiler, graph builder, Gemini analyzer, artifact store
+│   ├── memory/                # Embeddings, Pinecone vector store, retriever, sessions, cache
+│   ├── agents/                # LLM client, planner, 6 specialists, synthesizer, orchestrator
+│   ├── tools/                 # Tool registry (search, graph, dependency, architecture, API lookups)
+│   └── requirements.txt
+├── frontend/
+│   ├── src/App.jsx            # Auth session + app state machine
+│   ├── src/components/        # InputForm, Dashboard, GraphViewer, RepositoryAssistant, KnowledgeExplorer, ...
+│   └── vite.config.js         # Dev proxy /api → backend
+├── Dockerfile                 # Unified build for Hugging Face Spaces (port 7860)
+└── docker-compose.yml         # Local split stack (backend + nginx frontend)
+```
+
+---
+
+## ⚙️ Getting Started
 
 ### Prerequisites
 
 - Python 3.11+
 - Node.js 20+
-- Git (for repository cloning)
-- Gemini API key from [Google AI Studio](https://aistudio.google.com/)
+- Git (the backend clones repositories)
+- Accounts and keys for **Gemini**, **Pinecone** and **Supabase** (LangSmith is optional)
 
-### Local Setup
-
-1. **Clone the repository**
+### 1. Clone
 
 ```bash
-git clone <your-repo-url>
-cd "Software Engineer Agent"
+git clone https://github.com/G-Madhuri/Repository-Intelligence-RAG.git
+cd Repository-Intelligence-RAG
 ```
 
-2. **Configure environment**
+### 2. Configure environment
 
-```bash
-cp .env.example backend/.env
-# Edit backend/.env and set GEMINI_API_KEY
+Create `backend/.env`:
+
+```env
+# LLM
+GEMINI_API_KEY=your_gemini_api_key
+
+# Vector database
+PINECONE_API_KEY=your_pinecone_api_key
+PINECONE_INDEX_NAME=your_index_name        # 1024-dim index for llama-text-embed-v2
+
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key
+DATABASE_URL=postgresql://user:password@host:5432/postgres
+
+# Optional
+CORS_ORIGINS=http://localhost:5173
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=your_langsmith_key
+LANGSMITH_PROJECT=repository-intelligence
 ```
 
-3. **Install backend dependencies**
+For the frontend, you can optionally create `frontend/.env`:
+
+```env
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+# VITE_API_URL=            # leave empty to use the Vite proxy
+# VITE_API_PROXY=http://localhost:8000
+```
+
+### 3. Create the database tables
 
 ```bash
 cd backend
 pip install -r requirements.txt
+python migrate_supabase.py
 ```
 
-4. **Install frontend dependencies**
+This creates the `users`, `repos`, `jobs` and `conversations` tables and enables Row Level Security.
 
-```bash
-cd ../frontend
-npm install
-```
+### 4. Run the backend
 
-5. **Run locally (two terminals)**
-
-Terminal 1 — Backend:
 ```bash
 cd backend
-uvicorn main:app --reload --host 127.0.0.1 --port 8000
+uvicorn main:app --reload --port 8000
 ```
 
-Terminal 2 — Frontend:
+### 5. Run the frontend
+
 ```bash
 cd frontend
+npm install
 npm run dev
 ```
 
-Open **http://localhost:5173** — the Vite dev server proxies `/api` to the backend.
+Open http://localhost:5173, sign up or sign in, and analyze a repository.
 
-## Environment Variables
+---
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GEMINI_API_KEY` | Yes | Google Gemini API key for analysis, chat, and embeddings |
-| `CORS_ORIGINS` | No | Comma-separated allowed origins (default: `*`) |
-| `VITE_API_URL` | No | Frontend API base URL (empty = same origin / Vite proxy) |
-| `VITE_API_PROXY` | No | Vite dev proxy target (default: `http://localhost:8000`) |
+## 🐳 Docker
 
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/health` | Health check |
-| `POST` | `/api/analyze-url` | Clone and analyze a GitHub repository |
-| `POST` | `/api/analyze-zip` | Upload and analyze a ZIP archive |
-| `GET` | `/api/download/{repo_id}/{type}` | Download artifact (`profile`, `graph`, `summary`, `report`) |
-| `POST` | `/api/chat` | Multi-agent chat with RAG |
-| `POST` | `/api/search` | Semantic search over indexed knowledge |
-| `GET` | `/api/memory?repo_id=` | Vector index statistics |
-| `GET` | `/api/conversations?repo_id=` | List chat sessions |
-| `GET` | `/api/conversations/{session_id}` | Session message history |
-| `GET` | `/api/tools` | Tool catalog |
-
-## Docker
-
-### Unified (Hugging Face / production)
+**Single container** (the same image that runs on Hugging Face Spaces):
 
 ```bash
-docker build -t repo-intelligence .
-docker run -p 7860:7860 -e GEMINI_API_KEY=your_key repo-intelligence
+docker build -t repository-intelligence .
+docker run -p 7860:7860 --env-file backend/.env repository-intelligence
 ```
 
-Open **http://localhost:7860**
+Then open http://localhost:7860.
 
-### Split stack (development)
+**Split stack** (backend plus an nginx frontend):
 
 ```bash
-export GEMINI_API_KEY=your_key
 docker compose up --build
 ```
 
-- Frontend: **http://localhost:5173**
-- Backend: **http://localhost:8000**
+Then open http://localhost:5173.
 
-## Hugging Face Spaces Deployment
+---
 
-This project is ready for **free deployment** on [Hugging Face Spaces](https://huggingface.co/spaces) using the Docker SDK.
+## 🔌 API Endpoints
 
-1. Create a new Space → select **Docker** as the SDK
-2. Push this repository (or connect GitHub)
-3. Ensure the root `Dockerfile` is used (builds frontend + serves backend on port **7860**)
-4. Add a Space secret: `GEMINI_API_KEY` = your Gemini API key
-5. Wait for the build to complete
+Every `/api/*` route except the health check needs `Authorization: Bearer <supabase_access_token>`.
 
-The Space will serve both the React dashboard and FastAPI backend from a single container.
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/health` | Health check (public) |
+| POST | `/api/analyze-url` | Analyze a GitHub repo: `{ "url": "...", "token": "optional PAT" }` |
+| POST | `/api/analyze-zip` | Analyze an uploaded `.zip` (multipart `file`) |
+| POST | `/api/chat` | Multi-agent Q&A: `{ "repo_id", "question", "session_id?" }` |
+| POST | `/api/search` | Semantic search: `{ "repo_id", "query", "top_k", "category?" }` |
+| GET | `/api/download/{repo_id}/{type}` | Download `report`, `profile`, `summary` or `graph` |
+| GET | `/api/memory?repo_id=` | Number of indexed chunks |
+| GET | `/api/conversations?repo_id=` | Chat sessions for a repo |
+| GET | `/api/conversations/{session_id}` | Session history |
+| GET | `/api/tools` | Available agent tools |
 
-### HF Space Settings
+Interactive API docs are available at `/docs`.
 
-- **SDK:** Docker
-- **App port:** 7860
-- **Secrets:** `GEMINI_API_KEY`
+---
 
-## Generated Artifacts
+## 📊 Generated Artifacts
 
-After analysis, the platform produces:
+| Artifact | Contents |
+|---|---|
+| `repository_report.md` | Full Markdown intelligence report |
+| `repository_profile.json` | Languages, frameworks, databases, auth methods, modules, API endpoints, architecture pattern, dependencies |
+| `repository_summary.json` | Elevator pitch, core features, workflows, key components, risks, where to start reading |
+| `repository_graph.json` | Nodes, edges, entry points, business flows, critical paths, concepts |
 
-| File | Description |
-|------|-------------|
-| `repository_report.md` | Full markdown intelligence report |
-| `repository_profile.json` | Languages, frameworks, APIs, modules, auth |
-| `repository_summary.json` | Elevator pitch, features, workflows, risks |
-| `repository_graph.json` | Architecture nodes, edges, flows, concepts |
+---
 
-Artifacts are stored in `backend/storage/repos/{repo_id}/` and available via the dashboard download buttons.
+## 🔒 Security
 
-## Security
+- Supabase JWT verified server-side (`auth.get_user`) on every protected route
+- Per-repository ownership checks, plus Row Level Security policies in Postgres
+- Per-repository Pinecone namespaces for tenant isolation
+- ZIP path-traversal (zip-slip) protection
+- GitHub PAT redacted from error output and never stored; temporary workspaces deleted after each analysis
+- Parameterized SQL queries; clone target restricted to `github.com/<owner>/<repo>`
+- Automatic 1-hour data expiry
+- Secrets kept in environment variables (never commit `.env`)
 
-- ZIP extraction includes path-traversal protection
-- GitHub PAT tokens are redacted from error messages
-- Temporary clone/extract workspaces are cleaned up after analysis
-- Private repos require a valid GitHub Personal Access Token
+---
 
-## License
+## 🗺️ Roadmap
 
-MIT
+- [ ] Background job queue with real-time progress (SSE)
+- [ ] Stateless backend (object storage for artifacts, Redis cache) for horizontal scaling
+- [ ] Rate limiting and upload size limits
+- [ ] Sanitized Markdown rendering (DOMPurify)
+- [ ] Analysis caching by commit SHA
+- [ ] End-to-end LangSmith traces and evaluation datasets
+- [ ] CI pipeline (lint, mocked-LLM tests, image build)
+
+---
+
+## 👩‍💻 Author
+
+**G. Madhuri**: [GitHub](https://github.com/G-Madhuri) · [Hugging Face](https://huggingface.co/G-Madhuri)
+
+⭐ If you find this project useful, consider giving it a star!
