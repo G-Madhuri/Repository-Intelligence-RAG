@@ -25,3 +25,6 @@ frontend/dist/
 scratch/
 *.log
 .agents/
+
+# Local chat history
+backend/storage/conversations.json
